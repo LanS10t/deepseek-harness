@@ -11,9 +11,11 @@ cd D:\CodeProj\dsh_lans
 .\start.ps1
 ```
 
+也可以双击仓库根目录的 `start.bat`，或在 CMD 中运行 `start.bat -Port 3081 -NoOpen`。BAT 调用同一份 PowerShell 启动脚本，使用相同的数据目录和参数；执行策略放宽仅作用于这一次 PowerShell 子进程，不修改系统策略。
+
 默认只监听 `127.0.0.1:3080`，并打开浏览器。手动打开时，请使用终端打印的完整地址，其中包含登录令牌；未认证时直接访问裸地址会返回 HTTP 401。不要分享带令牌的地址。在终端按 `Ctrl+C` 停止。
 
-首次进入页面后，在“设置 → 模型”配置提供方，再添加并选择工作区。模型密钥未预填，真实模型调用未验证。详见[官方中文使用指南](docs/user/guide/index.zh.md)和[模型配置指南](docs/user/guide/providers.zh.md)。
+首次进入页面后，在“设置 → 模型”查看或调整提供方，再添加并选择工作区。此本机实例已经迁入旧实例的 TokenRouter 配置与对应凭据；这些内容不在 Git 中，重新克隆不会获得它们。真实模型调用未验证。详见[官方中文使用指南](docs/user/guide/index.zh.md)和[模型配置指南](docs/user/guide/providers.zh.md)。
 
 ## 本地参数
 
