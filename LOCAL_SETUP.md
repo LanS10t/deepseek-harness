@@ -17,6 +17,8 @@ cd D:\CodeProj\dsh_lans
 
 首次进入页面后，在“设置 → 模型”查看或调整提供方，再添加并选择工作区。此本机实例已经迁入旧实例的 TokenRouter 配置与对应凭据；这些内容不在 Git 中，重新克隆不会获得它们。真实模型调用未验证。详见[官方中文使用指南](docs/user/guide/index.zh.md)和[模型配置指南](docs/user/guide/providers.zh.md)。
 
+本实例还安装了 8 个公开插件，其中 7 个已启用；Agent Teams 最新预发布版与当前 Harness 不兼容，保留安装但停用。具体版本、来源、验证范围和备份位置见[当前插件安装记录](LOCAL_PLUGIN_INSTALL.md)。
+
 ## 本地参数
 
 不自动打开浏览器：

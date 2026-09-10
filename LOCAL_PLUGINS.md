@@ -1,6 +1,6 @@
 # 旧 DSH 实例的非官方扩展
 
-盘点日期：2026-09-10。源码目录为 `D:\DS_HARNESS\deepseek-harness-omgwowh-my-dsh`，该目录的 `start-web.bat` 没有覆盖 `DSH_HOME`；本盘点按其通常使用的 `C:\Users\LansNi\.dsh` 检查配置。如果调用者预先设置了其他 `DSH_HOME`，则另一个实例不在本次范围内。本次只迁移 TokenRouter 模型与对应凭据，没有安装或移植以下扩展。
+盘点日期：2026-09-10。源码目录为 `D:\DS_HARNESS\deepseek-harness-omgwowh-my-dsh`，该目录的 `start-web.bat` 没有覆盖 `DSH_HOME`；本盘点按其通常使用的 `C:\Users\LansNi\.dsh` 检查配置。如果调用者预先设置了其他 `DSH_HOME`，则另一个实例不在本次范围内。本文描述旧实例，不代表新实例的安装状态；新实例见[当前插件安装记录](LOCAL_PLUGIN_INSTALL.md)。
 
 ## Web profile 中已配置的插件
 
