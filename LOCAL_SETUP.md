@@ -1,6 +1,6 @@
 # 本地启动
 
-本目录使用官方 DeepSeek Harness 源码，`origin` 保留官方上游，`master` 保留拉取基线，`lans` 用于本地修改。没有创建远程仓库或推送代码。
+本目录使用官方 DeepSeek Harness 源码，`origin` 指向 `LanS10t/deepseek-harness` fork，`upstream` 指向官方 `deepseek-ai/deepseek-harness`。本地 `master` 保留拉取基线，`lans` 用于本地修改和分支发布；发布 `lans` 不更新远端 `master`。
 
 ## 启动教程
 
