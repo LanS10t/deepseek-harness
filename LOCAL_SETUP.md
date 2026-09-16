@@ -17,7 +17,7 @@ cd D:\CodeProj\dsh_lans
 
 首次进入页面后，在“设置 → 模型”查看或调整提供方，再添加并选择工作区。此本机实例已经迁入旧实例的 TokenRouter 配置与对应凭据；这些内容不在 Git 中，重新克隆不会获得它们。真实模型调用未验证。详见[官方中文使用指南](docs/user/guide/index.zh.md)和[模型配置指南](docs/user/guide/providers.zh.md)。
 
-本实例安装了 10 个直接依赖插件包；Agent Teams 和 Outline 因接口不兼容而保留安装但停用，UI 全家桶中的重复侧栏条目也停用，独立 Better Sidebar 保持启用。不要同时打开两个侧栏条目。具体版本、兼容性限制、验证范围和备份位置见[当前插件安装记录](LOCAL_PLUGIN_INSTALL.md)。
+本实例使用官方 `0.1.6-alpha.1`，已启用独立 Edge 浏览器控制与原生 Computer Use。10 个第三方插件包保留安装，Agent Teams 和 Outline 通过精确版本的本地补丁恢复启用；旧 Sky 适配器保留但停用。独立 Better Sidebar 保持启用，不要同时打开全家桶的重复侧栏。具体版本、权限限制、验证范围和备份位置见[当前插件安装记录](LOCAL_PLUGIN_INSTALL.md)。
 
 ## Claude Fable 5.1
 

@@ -1,0 +1,26 @@
+diff --git a/lib/capabilities.js b/lib/capabilities.js
+index 8ab481ca9d24590698eaf2023ca572958bd0fe00..2dd7d6652679082023d612b65b5f51d2dc0b75f0 100644
+--- a/lib/capabilities.js
++++ b/lib/capabilities.js
+@@ -95,7 +95,7 @@ export function installTeamCapabilities(ctx, config) {
+             return agent !== undefined && states.get(agent)?.member ? TEAM_MEMBER_PROMPT : captainPrompt;
+         },
+     });
+-    ctx.on('agent/session-start', ({ agent }) => { attach(agent); });
++    ctx.on('agent/created', ({ agent }) => { attach(agent); });
+     ctx.effect(() => () => {
+         mounted = false;
+         for (const state of [...active])
+diff --git a/lib/harness-compat.js b/lib/harness-compat.js
+index daf133f27f2dc18156b937eeda4f26b7287e77f3..c7ecc0cf4bf0e37bd00a8127c5c0c0bf27ac225d 100644
+--- a/lib/harness-compat.js
++++ b/lib/harness-compat.js
+@@ -47,7 +47,7 @@ export function installContinuableMemberSetup(ctx, setup) {
+     const installed = new WeakSet();
+     const active = new Set();
+     ctx.effect(() => {
+-        const stop = ctx.on('agent/session-start', ({ agent }) => {
++        const stop = ctx.on('agent/created', ({ agent }) => {
+             if (installed.has(agent))
+                 return;
+             // Deliberately synchronous: awaiting here loses the first-request race.

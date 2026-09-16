@@ -1,0 +1,194 @@
+diff --git a/lib/client.js b/lib/client.js
+index e3249d2bb2e44faba1f76eba4ec1969a8e9855bc..b5df3b8cd83909914c80ecf220c0e150d8158032 100644
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -611,7 +611,7 @@ window.__ModuleLoader__.load({
+ 		const FLASH_CLASS = "dsho-anchor-flash";
+ 		const FLASH_MS = 1600;
+ 		function findChatRoot(doc = document) {
+-			return doc.querySelector("[data-slot=\"conversation\"]");
++			return doc.querySelector("[data-slot=\"conversation.session\"]");
+ 		}
+ 		/** 会话滚动容器（每次调用重新取，代价可忽略且避免陈旧引用）。 */
+ 		function findChatScrollContainer(root) {
+@@ -1105,7 +1105,7 @@ window.__ModuleLoader__.load({
+ 		const PANEL_WIDTH = 320;
+ 		const REPO_URL = "https://github.com/urzeye/dsh-outline";
+ 		function OutlinePanel(props) {
+-			const { store, sessions, useSessions, t } = props;
++			const { store, sessions, uiConversation, useSessions, t } = props;
+ 			const chrome = (0, react.useSyncExternalStore)(store.subscribe, store.getSnapshot);
+ 			const sessionId = useSessions((s) => s.current);
+ 			const [peek, setPeek] = (0, react.useState)(false);
+@@ -1134,9 +1134,10 @@ window.__ModuleLoader__.load({
+ 				});
+ 			}, [sessionId]);
+ 			const binding = sessionId === void 0 ? void 0 : sessions.binding(sessionId);
+-			const subscribeSession = (0, react.useCallback)((fn) => binding?.session.subscribe(fn) ?? (() => {}), [binding]);
+-			const snapshot = (0, react.useSyncExternalStore)(subscribeSession, () => binding?.session.getSnapshot());
+-			const items = (0, react.useMemo)(() => snapshot === void 0 ? [] : buildOutlineItems(snapshot), [snapshot]);
++			const chat = binding === void 0 ? void 0 : uiConversation.binding(binding).target("chat");
++			const subscribeSession = (0, react.useCallback)((fn) => chat?.subscribe(fn) ?? (() => {}), [chat]);
++			const snapshot = (0, react.useSyncExternalStore)(subscribeSession, () => chat?.getSnapshot());
++			const items = (0, react.useMemo)(() => snapshot === void 0 ? [] : buildOutlineItems(snapshot.legacy), [snapshot]);
+ 			(0, react.useEffect)(() => {
+ 				manager?.setItems(items);
+ 			}, [manager, items]);
+@@ -1480,7 +1481,8 @@ window.__ModuleLoader__.load({
+ 		const inject = [
+ 			"slots",
+ 			"sessions",
+-			"locale"
++			"locale",
++			"uiConversation"
+ 		];
+ 		/**
+ 		* Client plugin body.
+@@ -1499,7 +1501,8 @@ window.__ModuleLoader__.load({
+ 				locale: NS,
+ 				inject: () => ({
+ 					store,
+-					sessions: ctx.sessions
++					sessions: ctx.sessions,
++					uiConversation: ctx.uiConversation
+ 				})
+ 			}, OutlinePanel));
+ 		}
+diff --git a/lib/types/client/outline-source.d.ts b/lib/types/client/outline-source.d.ts
+index 8ec075666aa09ecfd4007702eac09085e49af534..e19de6fc690c0e5711693ae6e26e90ae5d6d3acf 100644
+--- a/lib/types/client/outline-source.d.ts
++++ b/lib/types/client/outline-source.d.ts
+@@ -9,7 +9,7 @@
+  * - partial（流式中）的 text block 同样解析，标记 streaming；
+  * - 其余节点类型（tool-result/context/turn-error/...）一律排除。
+  */
+-import type { ConversationSnapshot } from '@deepseek-ai/dsh-client-runtime/client';
++import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client';
+ import type { OutlineItem } from '../core/types.ts';
+ export type SourceItem = Omit<OutlineItem, 'id'>;
+-export declare function buildOutlineItems(snapshot: ConversationSnapshot): SourceItem[];
++export declare function buildOutlineItems(snapshot: ChatSnapshot['legacy']): SourceItem[];
+diff --git a/lib/types/client/panel/OutlinePanel.d.ts b/lib/types/client/panel/OutlinePanel.d.ts
+index a9e86340cde354a60c89a8d983b369daa5e322c2..b7948e09f615d992d327d869901ca09c13fb7c8d 100644
+--- a/lib/types/client/panel/OutlinePanel.d.ts
++++ b/lib/types/client/panel/OutlinePanel.d.ts
+@@ -1,9 +1,11 @@
+ import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
+ import type { ISessions } from '@deepseek-ai/dsh-client-runtime/client';
++import type { UiConversation } from '@deepseek-ai/dsh-client-ui-conversation/client';
+ import { type ChromeStore } from '../store.ts';
+ export interface OutlineInjected {
+     store: ChromeStore;
+     sessions: ISessions;
++    uiConversation: UiConversation;
+ }
+ export type OutlinePanelProps = PropsRuntime<'shell.overlay'> & InjectFace<OutlineInjected> & PropsLocale<'outline'>;
+ export declare function OutlinePanel(props: OutlinePanelProps): import("react").JSX.Element | null;
+diff --git a/src/client/dom-anchor.ts b/src/client/dom-anchor.ts
+index b3302f5cbb2fcdfbf8eda41dd3a56b13adeaa9f3..ddc6f757fbe44c093e4b228f67caab0d912a3584 100644
+--- a/src/client/dom-anchor.ts
++++ b/src/client/dom-anchor.ts
+@@ -19,7 +19,7 @@ const FLASH_CLASS = 'dsho-anchor-flash'
+ const FLASH_MS = 1600
+ 
+ export function findChatRoot(doc: Document = document): HTMLElement | null {
+-  return doc.querySelector<HTMLElement>('[data-slot="conversation"]')
++  return doc.querySelector<HTMLElement>('[data-slot="conversation.session"]')
+ }
+ 
+ /** 会话滚动容器（每次调用重新取，代价可忽略且避免陈旧引用）。 */
+diff --git a/src/client/index.tsx b/src/client/index.tsx
+index a342e9c1120cd248b319f963c79774287cd25a77..eaf84f30ed8c2a73593b0fea16aa4eba7c36e7ce 100644
+--- a/src/client/index.tsx
++++ b/src/client/index.tsx
+@@ -15,7 +15,7 @@ import { OutlinePanel } from './panel/OutlinePanel.tsx'
+ import './anchor.css'
+ 
+ /** Required services: slot registry, session object layer, dictionary registry. */
+-export const inject = ['slots', 'sessions', 'locale']
++export const inject = ['slots', 'sessions', 'locale', 'uiConversation']
+ 
+ /**
+  * Client plugin body.
+@@ -36,6 +36,6 @@ export function apply(ctx: ClientContext): void {
+     id: 'outline',
+     order: 100,
+     locale: NS,
+-    inject: () => ({ store, sessions: ctx.sessions }),
++    inject: () => ({ store, sessions: ctx.sessions, uiConversation: ctx.uiConversation }),
+   }, OutlinePanel))
+ }
+diff --git a/src/client/outline-source.ts b/src/client/outline-source.ts
+index ab74341641664067fbf6645d586d80cf60ffa402..c1f938a4558e70a604f3639b6d0b61850d2cab33 100644
+--- a/src/client/outline-source.ts
++++ b/src/client/outline-source.ts
+@@ -9,7 +9,7 @@
+  * - partial（流式中）的 text block 同样解析，标记 streaming；
+  * - 其余节点类型（tool-result/context/turn-error/...）一律排除。
+  */
+-import type { ConversationSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
++import type { ChatSnapshot } from '@deepseek-ai/dsh-client-ui-chat/client'
+ import { parseMarkdownHeadings } from '../core/markdown-heading.ts'
+ import type { OutlineItem } from '../core/types.ts'
+ 
+@@ -33,7 +33,7 @@ function userTextOf(content: readonly TextBlockLike[]): string {
+ 
+ export type SourceItem = Omit<OutlineItem, 'id'>
+ 
+-export function buildOutlineItems(snapshot: ConversationSnapshot): SourceItem[] {
++export function buildOutlineItems(snapshot: ChatSnapshot['legacy']): SourceItem[] {
+   const items: SourceItem[] = []
+   let userIndex = 0
+   let headingIndex = 0
+diff --git a/src/client/panel/OutlinePanel.tsx b/src/client/panel/OutlinePanel.tsx
+index 63e0c04c827720eb550b790391280fb610617af8..9da3014552ce6f4690398a1788b9df25a7b93776 100644
+--- a/src/client/panel/OutlinePanel.tsx
++++ b/src/client/panel/OutlinePanel.tsx
+@@ -9,6 +9,7 @@
+ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore } from 'react'
+ import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+ import type { ISessions } from '@deepseek-ai/dsh-client-runtime/client'
++import type { UiConversation } from '@deepseek-ai/dsh-client-ui-conversation/client'
+ import { OutlineManager } from '../../core/outline-manager.ts'
+ import { resolveVisibleActiveId } from '../../core/outline-tree.ts'
+ import type { OutlineNode } from '../../core/types.ts'
+@@ -30,6 +31,7 @@ import css from './panel.module.css'
+ export interface OutlineInjected {
+   store: ChromeStore
+   sessions: ISessions
++  uiConversation: UiConversation
+ }
+ 
+ export type OutlinePanelProps =
+@@ -39,7 +41,7 @@ const PANEL_WIDTH = 320
+ const REPO_URL = 'https://github.com/urzeye/dsh-outline'
+ 
+ export function OutlinePanel(props: OutlinePanelProps) {
+-  const { store, sessions, useSessions, t } = props
++  const { store, sessions, uiConversation, useSessions, t } = props
+   const chrome = useSyncExternalStore(store.subscribe, store.getSnapshot)
+   const sessionId = useSessions((s) => s.current)
+ 
+@@ -75,17 +77,18 @@ export function OutlinePanel(props: OutlinePanelProps) {
+ 
+   // 会话快照订阅（ObservableSnapshot：getSnapshot/subscribe）
+   const binding = sessionId === undefined ? undefined : sessions.binding(sessionId)
++  const chat = binding === undefined ? undefined : uiConversation.binding(binding).target('chat')
+   const subscribeSession = useCallback(
+-    (fn: () => void) => binding?.session.subscribe(fn) ?? (() => {}),
+-    [binding],
++    (fn: () => void) => chat?.subscribe(fn) ?? (() => {}),
++    [chat],
+   )
+   const snapshot = useSyncExternalStore(
+     subscribeSession,
+-    () => binding?.session.getSnapshot(),
++    () => chat?.getSnapshot(),
+   )
+ 
+   const items = useMemo(
+-    () => (snapshot === undefined ? [] : buildOutlineItems(snapshot)),
++    () => (snapshot === undefined ? [] : buildOutlineItems(snapshot.legacy)),
+     [snapshot],
+   )
+ 
