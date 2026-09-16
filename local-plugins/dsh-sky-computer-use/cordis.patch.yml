@@ -1,0 +1,5 @@
+- insert:
+    - id: sky-computer-use
+      name: dsh-sky-computer-use
+      config:
+        mode: disabled
