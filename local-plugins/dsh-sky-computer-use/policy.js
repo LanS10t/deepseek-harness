@@ -54,8 +54,10 @@ export class DesktopController {
     this.stopped = true;
     this.observation = null;
     this.windows.clear();
+    const done = this.activeDone;
     this.active?.abort();
     await this.runtime.stop();
+    await done;
   }
 
   async changed() {
@@ -81,6 +83,8 @@ export class DesktopController {
     if (this.active) throw new Error('Desktop executor is busy; no action was queued');
     const controller = new AbortController();
     this.active = controller;
+    let settle;
+    this.activeDone = new Promise(resolve => { settle = resolve; });
     const combined = AbortSignal.any([signal, controller.signal]);
     const stamp = JSON.stringify(this.config());
     try {
@@ -129,7 +133,7 @@ export class DesktopController {
         if (state.window.id !== live.id || state.window.app !== live.app) throw new Error('Capture returned a different window');
         this.check(stamp, combined, state.window.app, state.window.title);
         const id = randomUUID();
-        const result = await prepare({ ...state, observationId: id, windowId: args.windowId });
+        const result = await prepare({ ...state, observationId: id, windowId: args.windowId }, combined);
         this.check(stamp, combined);
         this.observation = { id, owner, windowId: args.windowId, state, time: this.now(), stamp };
         return result;
@@ -179,6 +183,8 @@ export class DesktopController {
       throw error;
     } finally {
       this.active = null;
+      this.activeDone = null;
+      settle();
     }
   }
 

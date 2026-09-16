@@ -1,0 +1,41 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`assembled desktop tool transcript without credentials > projects registered tools, DSH approval refusal and rich image content through the real runtime 1`] = `
+{
+  "approvalEvents": [
+    {
+      "outcome": null,
+      "type": "approval/asked",
+    },
+    {
+      "outcome": "unavailable",
+      "type": "approval/decided",
+    },
+  ],
+  "refusal": [
+    {
+      "text": "Error: DSH approval unavailable; no input performed",
+      "type": "text",
+    },
+  ],
+  "richContent": [
+    "text",
+    "image",
+  ],
+  "tools": [
+    "computer_status",
+    "computer_list_apps",
+    "computer_list_windows",
+    "computer_launch_app",
+    "computer_observe",
+    "computer_activate_window",
+    "computer_click",
+    "computer_press_key",
+    "computer_type_text",
+    "computer_set_value",
+    "computer_scroll",
+    "computer_drag",
+    "computer_perform_secondary_action",
+  ],
+}
+`;

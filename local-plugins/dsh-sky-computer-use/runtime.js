@@ -1,19 +1,28 @@
 import { fork } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 
+const safetyKey = Symbol.for('dsh-sky-computer-use.process-safety');
+if (!Object.hasOwn(globalThis, safetyKey)) {
+  Object.defineProperty(globalThis, safetyKey, { value: { poisoned: false } });
+}
+const processSafety = globalThis[safetyKey];
+
 /** Persistent public-Sky worker. A forced or unacknowledged shutdown permanently fails closed. */
 export class SkyRuntime {
-  constructor({ worker = new URL('./worker.js', import.meta.url), shutdownTimeoutMs = 5000 } = {}) {
+  constructor({ worker = new URL('./worker.js', import.meta.url), shutdownTimeoutMs = 5000, safety = processSafety } = {}) {
     this.worker = worker;
     this.shutdownTimeoutMs = shutdownTimeoutMs;
     this.child = null;
     this.pending = new Map();
-    this.poisoned = false;
+    this.safety = safety;
     this.closing = null;
     this.identity = null;
     this.initialized = false;
     this.closedAck = false;
   }
+
+  get poisoned() { return this.safety.poisoned; }
+  set poisoned(value) { if (value) this.safety.poisoned = true; }
 
   status() {
     return this.poisoned ? 'unavailable-restart-required' : this.closing ? 'stopping' : this.initialized ? 'ready' : 'stopped';

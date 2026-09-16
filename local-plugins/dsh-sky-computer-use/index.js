@@ -59,7 +59,8 @@ export function createTools(desktop, project) {
     output: { schema: {}, render: renderResult },
     presentCall: () => ({ card: 'generic', title: `Computer Use: ${operation}` }),
     async execute(args, exec) {
-      return await desktop.run(exec.agent?.session, operation, args, exec.signal, state => project(state, exec));
+      return await desktop.run(exec.agent?.session, operation, args, exec.signal,
+        (state, signal) => project(state, { ...exec, signal }));
     },
   }));
 }

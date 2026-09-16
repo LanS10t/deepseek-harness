@@ -47,7 +47,7 @@ Keep the mode disabled during configuration. The settings card supports staged e
 
 Enumerating produces session-owned opaque `windowId` values. Observation returns UIA text, saved screenshots, and an `observationId`. One action consumes one observation and immediately refreshes the target. Enumeration, cancellation, permission changes, input errors, and intervening observations invalidate prior observations. Window disappearance and expired observations require fresh selection. Input is never automatically retried.
 
-The executor rejects overlap rather than queuing another session. Cancellation and disposal close the owned worker through Sky's public `close()` method. If shutdown is not acknowledged, the adapter refuses further operations until the DSH process restarts; killing a worker is not proof that a native action stopped.
+The executor rejects overlap rather than queuing another session. Cancellation and disposal close the owned worker through Sky's public `close()` method and await the complete in-flight tool call, including result preparation. If shutdown is not acknowledged, a process-wide latch refuses further operations even after plugin reload, until the DSH process restarts; killing a worker is not proof that a native action stopped.
 
 Screenshots pass through DSH attachment storage before tool projection. The canonical tool value includes attachment references, not base64. An image-capable active model receives image blocks through the same tool result. A model without positively declared image input receives UIA and an explicit notice; the plugin does not start a second model request.
 

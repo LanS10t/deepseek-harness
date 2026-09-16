@@ -12,7 +12,7 @@ A locally installed desktop driver can expose useful observation and input APIs 
 
 The [local Sky bundle](../../../../local-plugins/dsh-sky-computer-use/README.md) uses a persistent private Node worker and only the installed package's public export. The model receives fixed DSH tools, not a JavaScript execution endpoint. User settings own the exact application scope and permission mode. DSH one-shot approval and native application approval remain separate decisions.
 
-Window selection comes from enumeration. An observation belongs to one session and window and is consumed before input. The executor rejects overlap, rechecks current policy after approval, and refreshes after each input. Cancellation closes the owned worker; an unacknowledged shutdown makes the worker unavailable until process restart. Saved attachment references enter normal DSH tool results so screenshots can be logged and projected without encoded bytes in text.
+Window selection comes from enumeration. An observation belongs to one session and window and is consumed before input. The executor rejects overlap, rechecks current policy after approval, and refreshes after each input. Cancellation closes the owned worker and awaits result preparation; an unacknowledged shutdown persists across plugin reloads until process restart. Saved attachment references enter normal DSH tool results so screenshots can be logged and projected without encoded bytes in text.
 
 The installable bundle keeps desktop access disabled. The standalone native probe reports app approval unavailability instead of synthesizing a trusted host or silently replacing the driver. Independent UIA, screenshot, input, Codex-closed, and model-delivery evidence are distinct requirements.
 

@@ -184,6 +184,35 @@ test('caller cancellation while awaiting approval also closes the idle worker', 
   assert.equal(f.desktop.active, null);
 });
 
+test('stop forwards cancellation to result preparation and waits for that work to settle', async () => {
+  const f = fixture();
+  const [selected] = await f.run('list_windows');
+  let entered;
+  const started = new Promise(resolve => { entered = resolve; });
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  let resultSignal;
+  const pending = f.desktop.run('a', 'observe', { windowId: selected.windowId }, signal(),
+    async (_value, combined) => {
+      resultSignal = combined;
+      entered();
+      await gate;
+      combined.throwIfAborted();
+      throw new Error('Preparation must not continue after cancellation');
+    });
+  const outcome = pending.catch(error => error);
+  await started;
+  let stopped = false;
+  const stop = f.desktop.stop().then(() => { stopped = true; });
+  await Promise.resolve();
+  assert.equal(resultSignal.aborted, true);
+  assert.equal(stopped, false);
+  release();
+  await stop;
+  assert.equal((await outcome).name, 'AbortError');
+  assert.equal(f.desktop.active, null);
+});
+
 test('screenshots are durably admitted and encoded bytes never enter text projection', async () => {
   const saved = [];
   const state = {
