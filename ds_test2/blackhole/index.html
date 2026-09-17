@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="description" content="视界 HORIZON — 基于 Schwarzschild 度规零测地线光线追踪的黑洞模拟（G=c=M=1）">
+  <title>视界 HORIZON · 史瓦西黑洞测地线渲染</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%2305070c'/%3E%3Ccircle cx='8' cy='8' r='4.5' fill='none' stroke='%23ffb454' stroke-width='1.4'/%3E%3Ccircle cx='8' cy='8' r='2' fill='%23000'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <canvas id="gl"></canvas>
+  <div id="reticle"><i></i></div>
+
+  <!-- 标题 -->
+  <header id="titleblock">
+    <div class="brand">
+      <h1>HORIZON</h1>
+      <span class="zh">视界 · 史瓦西黑洞模拟</span>
+    </div>
+    <div class="sub">
+      <span class="led"></span>
+      GENERAL RELATIVITY GEODESIC RAY TRACING · G=c=M=1
+    </div>
+  </header>
+
+  <!-- 遥测 -->
+  <section id="telemetry">
+    <div class="cell"><span class="k">FPS</span><span class="v" id="t-fps">–</span></div>
+    <div class="cell"><span class="k">帧耗时 MS</span><span class="v" id="t-ms">–</span></div>
+    <div class="cell"><span class="k">相机 R₀</span><span class="v" id="t-r">–</span></div>
+    <div class="cell"><span class="k">倾角 θ</span><span class="v" id="t-pitch">–</span></div>
+    <div class="cell"><span class="k">FOV</span><span class="v" id="t-fov">–</span></div>
+    <div class="cell"><span class="k">分辨率</span><span class="v" id="t-res">–</span></div>
+    <div class="cell"><span class="k">步数上限</span><span class="v" id="t-steps">–</span></div>
+  </section>
+
+  <!-- 控制面板 -->
+  <aside id="panel">
+    <div class="p-head">
+      <span class="t">参数控制</span>
+      <span class="s">PARAMETER DECK</span>
+      <button id="collapse" title="隐藏/显示面板 (H)">≫</button>
+    </div>
+
+    <div class="p-body">
+
+      <div class="group" id="presets">
+        <div class="g-title">预设<span class="en">PRESETS</span></div>
+        <div class="chips">
+          <button data-preset="default">默认</button>
+          <button data-preset="interstellar">星际穿越</button>
+          <button data-preset="edgeon">侧视</button>
+          <button data-preset="top">俯视</button>
+          <button data-preset="close">近距</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="g-title">相机<span class="en">CAMERA</span></div>
+        <label class="ctl"><span class="ctl-name">轨道半径 r₀<span class="en">R0</span></span><output>–</output><input type="range" id="rCam"></label>
+        <label class="ctl"><span class="ctl-name">视场角<span class="en">FOV</span></span><output>–</output><input type="range" id="fov"></label>
+        <label class="switch"><input type="checkbox" id="tg-orbit"><span class="track"></span><span class="sw-name">自动环绕<span class="en">AUTO ORBIT</span></span></label>
+      </div>
+
+      <div class="group">
+        <div class="g-title">吸积盘<span class="en">ACCRETION DISK</span></div>
+        <label class="ctl"><span class="ctl-name">内半径 r_in<span class="en">R IN</span></span><output>–</output><input type="range" id="rIn"></label>
+        <label class="ctl"><span class="ctl-name">外半径 r_out<span class="en">R OUT</span></span><output>–</output><input type="range" id="rOut"></label>
+        <label class="ctl"><span class="ctl-name">峰值温度 T_in<span class="en">T PEAK</span></span><output>–</output><input type="range" id="tInLog"></label>
+        <label class="ctl"><span class="ctl-name">盘面亮度<span class="en">BRIGHT</span></span><output>–</output><input type="range" id="diskBright"></label>
+        <label class="switch"><input type="checkbox" id="tg-doppler"><span class="track"></span><span class="sw-name">多普勒频移 + 集束<span class="en">DOPPLER BEAMING</span></span></label>
+        <label class="switch"><input type="checkbox" id="tg-redshift"><span class="track"></span><span class="sw-name">引力红移<span class="en">GRAV. REDSHIFT</span></span></label>
+        <label class="switch"><input type="checkbox" id="tg-truecolor"><span class="track"></span><span class="sw-name">黑体真彩色温<span class="en">PLANCK COLOR</span></span></label>
+      </div>
+
+      <div class="group">
+        <div class="g-title">渲染<span class="en">RENDER</span></div>
+        <label class="ctl"><span class="ctl-name">测地线精度<span class="en">QUALITY</span></span><output>–</output><input type="range" id="quality"></label>
+        <label class="ctl"><span class="ctl-name">内部分辨率<span class="en">RES</span></span><output>–</output><input type="range" id="resScale"></label>
+        <label class="ctl"><span class="ctl-name">曝光<span class="en">EXPOSURE</span></span><output>–</output><input type="range" id="exposure"></label>
+        <label class="ctl"><span class="ctl-name">辉光<span class="en">BLOOM</span></span><output>–</output><input type="range" id="bloom"></label>
+        <label class="ctl"><span class="ctl-name">星空亮度<span class="en">SKY</span></span><output>–</output><input type="range" id="skyBright"></label>
+        <div class="ctl" style="margin-top:11px">
+          <span class="ctl-name">背景<span class="en">BACKGROUND</span></span>
+          <span style="grid-column:1/-1; margin-top:6px" class="seg" id="bgMode">
+            <button data-mode="0" class="active">星空</button>
+            <button data-mode="1">网格</button>
+            <button data-mode="2">纯黑</button>
+          </span>
+        </div>
+      </div>
+
+      <div class="group">
+        <details>
+          <summary>物理模型<span class="en">PHYSICS</span></summary>
+          <div class="eq-list">
+            <div class="eq"><span class="lab">度规 · SCHWARZSCHILD METRIC</span>
+              <span class="f">ds² = −(1−2M/r)dt² + (1−2M/r)⁻¹dr² + r²(dθ² + sin²θ dφ²)</span></div>
+            <div class="eq"><span class="lab">光子轨道方程 · BINET（每像素 RK4 积分）</span>
+              <span class="f">u″ + u = 3Mu²</span>，u = 1/r，' = d/dφ</div>
+            <div class="eq"><span class="lab">守恒量 · 碰撞参数</span>
+              <span class="f">b = L/E = r₀v_t/√(1−2M/r₀)</span>；临界 b_c = 3√3M ≈ 5.196M</div>
+            <div class="eq"><span class="lab">吸积盘温度 · NOVIKOV–THORNE</span>
+              <span class="f">T ∝ r^(−3/4)·[1−√(r_in/r)]^(1/4)</span>，峰值 1.3611 r_in</div>
+            <div class="eq"><span class="lab">红移因子 · DOPPLER + GRAVITY</span>
+              <span class="f">g = √(1−3M/r) / [√(1−2M/r₀)·(1−b_z√(M/r³))]</span></div>
+            <div class="eq"><span class="lab">辐射转移 · I/ν³ 洛伦兹不变量</span>
+              <span class="f">I_obs = g⁴·σT⁴/π</span>，观测色温 gT（Planck × CIE1931）</div>
+            <div class="eq"><span class="lab">关键半径</span>
+              视界 2M · 光子球 3M · ISCO 6M · r_in 默认 6M</div>
+          </div>
+        </details>
+      </div>
+
+      <div class="group">
+        <div class="actions">
+          <button id="btn-reset">复位视角</button>
+          <button id="btn-shot">保存截图</button>
+          <button id="btn-full">全屏</button>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- 底部提示 -->
+  <footer id="hint">
+    <kbd>拖动 旋转</kbd><kbd>滚轮/双指 缩放</kbd><kbd>双击 复位</kbd><kbd>空格 暂停</kbd><kbd>H 面板</kbd><kbd>F 全屏</kbd><kbd>1–5 预设</kbd>
+  </footer>
+
+  <!-- 加载 -->
+  <div id="loader">
+    <div class="ring"></div>
+    <div class="loader-title">HORIZON<small> 视界</small></div>
+    <div class="loader-text">初始化测地线渲染器…</div>
+  </div>
+
+  <!-- 错误 -->
+  <div id="error" hidden>
+    <div class="err-title">渲染器初始化失败</div>
+    <div class="err-msg"></div>
+  </div>
+
+  <!-- 自检结果 -->
+  <div id="selftest" hidden></div>
+
+  <script src="js/physics.js"></script>
+  <script src="js/shaders.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

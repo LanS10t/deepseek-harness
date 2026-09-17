@@ -1,0 +1,15 @@
+{
+  "browser": {
+    "launchOptions": {
+      "channel": "msedge",
+      "headless": true,
+      "args": [
+        "--enable-unsafe-swiftshader",
+        "--use-angle=swiftshader"
+      ]
+    },
+    "contextOptions": {
+      "viewport": { "width": 1280, "height": 800 }
+    }
+  }
+}
