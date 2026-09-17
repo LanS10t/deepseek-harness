@@ -1,141 +1,130 @@
-# 视界 HORIZON — 史瓦西黑洞测地线渲染器
+# HORIZON — Schwarzschild Black Hole Geodesic Renderer
 
-一个**零依赖、双击即开**的广义相对论黑洞模拟：每像素反向积分 Schwarzschild 时空中的
-零测地线（光子轨道），对 Novikov–Thorne 薄吸积盘做完整的相对论辐射转移
-（引力红移 × 多普勒频移/集束 × 黑体辐射），并让背景星空经受真实的引力透镜弯曲。
+English | [中文](README.zh.md)
 
-> 单位制：**几何单位 G = c = M = 1**（黑洞质量归一为 1，长度以 M 计）。
+A **zero-dependency general-relativistic black hole simulation that opens with a double-click**: backward integration of null geodesics (photon trajectories) in Schwarzschild spacetime for every pixel, complete relativistic radiative transfer for a Novikov–Thorne thin accretion disk (gravitational redshift × Doppler shift/beaming × blackbody radiation), and gravitational lensing of the background stars.
+
+> Units: **geometric units G = c = M = 1** (black hole mass normalized to 1; lengths in M).
 
 ---
 
-## 运行方式
+## Running
 
-**无需安装任何东西，无需构建。**
+**No installation or build is required.**
 
-| 方式 | 命令 |
+| Method | Command |
 | --- | --- |
-| 直接打开 | 双击 `index.html`（推荐，支持 `file://`） |
-| 静态服务器（可选） | `npx serve blackhole` 或 `python -m http.server 8000 -d blackhole` |
+| Open directly | Double-click `index.html` (recommended; supports `file://`) |
+| Optional static server | `npx serve blackhole` or `python -m http.server 8000 -d blackhole` |
 
-浏览器要求：支持 **WebGL2** 的现代浏览器（Chrome / Edge / Firefox / Safari 15+，
-桌面或手机均可）。首次打开需约 1 秒生成程序化星空背景。
+Browser requirements: a modern browser with **WebGL2** support (Chrome / Edge / Firefox / Safari 15+, desktop or mobile). Initial procedural starfield generation takes about one second.
 
-**物理自检模式**：`index.html?selftest` —— 页面会运行一组与解析/局域参考系结果
-交叉验证的数值测试，并弹出结果面板（结果也写入浏览器控制台）。
+**Physics self-test mode**: `index.html?selftest` runs numerical tests against analytical/local-frame results and opens a result panel (also logged to the browser console).
 
 ---
 
-## 物理模型（渲染管线中实际执行的公式）
+## Physics Model (Formulas Executed by the Rendering Pipeline)
 
-### 1. 度规与测地线
+### 1. Metric and Geodesics
 
-Schwarzschild 度规：
+Schwarzschild metric:
 
 ```
 ds² = −(1 − 2M/r) dt² + (1 − 2M/r)⁻¹ dr² + r² (dθ² + sin²θ dφ²)
 ```
 
-由测地线方程与守恒量（能量 `E`、角动量 `L`）得到**光子轨道方程（Binet）**：
+The geodesic equation and conserved quantities (energy `E`, angular momentum `L`) give the **photon orbit equation (Binet)**:
 
 ```
 u″ + u = 3M u²         u = 1/r，  ' = d/dφ
 ```
 
-每条像素光线从相机出发，用 **RK4** 对该精确方程积分（自适应步长 `h ∝ r²`，
-光子球附近自动加密，最大步数可调）：
+Each pixel ray starts at the camera and integrates this exact equation with **RK4** (adaptive step `h ∝ r²`, finer steps near the photon sphere, configurable maximum step count):
 
-- `r < 2M` → 被视界俘获，渲染为阴影；
-- 轨道与赤道面（吸积盘平面）相交且 `r_in < r < r_out` → 命中盘面（二分精化交点）；
-- `r → ∞` → 逃逸，按渐近方向采样星空背景（自然产生引力透镜 / 爱因斯坦环）。
+- `r < 2M` → captured by the horizon and rendered as shadow;
+- crossing the equatorial plane (disk plane) with `r_in < r < r_out` → disk hit (intersection refined by bisection);
+- `r → ∞` → escape; sample the background along the asymptotic direction (producing gravitational lensing / Einstein rings).
 
-光线初始条件由守恒量导出：
+Initial ray conditions derived from the conserved quantities:
 
 ```
 b = L/E = r₀ v_t / √(1 − 2M/r₀)          （碰撞参数）
 u′₀ = −√(1 − 2M/r₀) · v_r / (r₀ v_t)
 ```
 
-关键半径与临界值：视界 `2M`、光子球 `3M`、ISCO `6M`、
-阴影边界 `b_c = 3√3M ≈ 5.1962M`（与 EHT 对 M87* 阴影的测量量 √27M 一致）。
+Key radii and critical values: horizon `2M`, photon sphere `3M`, ISCO `6M`, shadow boundary `b_c = 3√3M ≈ 5.1962M` (consistent with the √27M shadow scale measured by EHT for M87*).
 
-### 2. 吸积盘辐射（Novikov–Thorne 薄盘）
+### 2. Disk Radiation (Novikov–Thorne Thin Disk)
 
-零力矩内边界的温度剖面（Page & Thorne 1974 的 Schwarzschild 情形）：
+Temperature profile with a zero-torque inner edge (the Schwarzschild case of Page & Thorne 1974):
 
 ```
 T(r) = T_in · (r_in/r)^(3/4) · [1 − √(r_in/r)]^(1/4) / T̂(r_p)
 峰值位于 r_p = (49/36) r_in ≈ 1.3611 r_in（数值上精确验证）
 ```
 
-每个发射事件的**红移因子**（发射体为开普勒圆轨道 `U = Uᵗ(∂_t + Ω ∂_φ)`，
-`Ω = √(M/r³)`，观测者为 `r₀` 处静态相机）：
+The **redshift factor** at each emission event (Keplerian circular emitter `U = Uᵗ(∂_t + Ω ∂_φ)`, `Ω = √(M/r³)`, static camera at `r₀`):
 
 ```
 g = ν_obs / ν_emit = √(1 − 3M/r) / [ √(1 − 2M/r₀) · (1 − b_z Ω) ]
 ```
 
-可分解为 引力红移 `√(f_emit/f₀)` × 轨道时间膨胀 `1/γ` × 多普勒 `1/(1−β∥)`，
-且与局域参考系洛伦兹变换结果**逐点一致**（自检第 4 项验证）。
+This decomposes into gravitational redshift `√(f_emit/f₀)` × orbital time dilation `1/γ` × Doppler factor `1/(1−β∥)`, matching the local-frame Lorentz transformation **point by point** (verified by self-test 4).
 
-### 3. 辐射转移
+### 3. Radiative Transfer
 
-由 `I_ν/ν³` 洛伦兹不变量：观测到的谱仍为黑体，温度为 `gT`，总强度
+From the Lorentz invariant `I_ν/ν³`, the observed spectrum remains a blackbody at temperature `gT`, with total intensity
 
 ```
 I_obs = g⁴ · σT⁴/π          （g⁴ 因子即多普勒集束 + 红移的联合效应）
 ```
 
-颜色：Planck 定律 × CIE 1931 标准观察者 → sRGB，预计算 512 级 LUT
-（3000 K 的红橙色到 30000 K 的蓝白色连续渐变）。
+Color: Planck's law × CIE 1931 standard observer → sRGB, using a precomputed 512-entry LUT (continuous transition from red-orange at 3000 K to blue-white at 30000 K).
 
-### 4. 渲染管线
+### 4. Rendering Pipeline
 
-测地线光线追踪（HDR）→ 高光提取（1/4 分辨率）→ 可分离高斯辉光 → ACES
-色调映射 + γ 校正 + 暗角。内部分辨率独立可调（0.35×–1.5×），支持浮点帧缓冲
-（`EXT_color_buffer_float`，缺失时自动回退 RGBA8）。
+Geodesic ray tracing (HDR) → bright-pass extraction (quarter resolution) → separable Gaussian bloom → ACES tone mapping + gamma correction + vignette. Internal resolution is independently adjustable (0.35×–1.5×), with floating-point framebuffers (`EXT_color_buffer_float`, falling back to RGBA8 when unavailable).
 
 ---
 
-## 操作说明
+## Controls
 
-| 操作 | 效果 |
+| Input | Effect |
 | --- | --- |
-| 鼠标/手指拖动 | 环绕黑洞旋转视角 |
-| 滚轮 / 双指捏合 | 改变轨道半径 r₀（3.2M–60M） |
-| 双击 / 键 `R` | 复位视角 |
-| `空格` | 暂停/继续 |
-| `H` | 显示/隐藏参数面板 |
-| `F` | 全屏 |
-| `1`–`5` | 预设：默认 / 星际穿越 / 侧视 / 俯视 / 近距 |
+| Mouse/finger drag | Orbit around the black hole |
+| Wheel / two-finger pinch | Adjust orbital radius r₀ (3.2M–60M) |
+| Double-click / `R` | Reset the view |
+| `Space` | Pause/resume |
+| `H` | Show/hide the parameter panel |
+| `F` | Fullscreen |
+| `1`–`5` | Presets: default / Interstellar / edge-on / top-down / close-up |
 
-## 可实时调节的参数
+## Live Parameters
 
-| 参数 | 范围 | 默认 | 说明 |
+| Parameter | Range | Default | Notes |
 | --- | --- | --- | --- |
-| 轨道半径 r₀ | 3.2–60 M | 12 M | 相机与黑洞距离 |
-| 视场角 FOV | 12–95° | 60° | |
-| 盘内半径 r_in | 2.2–10 M | **6 M (ISCO)** | 内边界即最内稳定圆轨道 |
-| 盘外半径 r_out | 8–60 M | 30 M | |
-| 峰值温度 T_in | 10⁵–3×10⁷ K | 4×10⁶ K | 对数刻度，决定盘色 |
-| 盘面亮度 | 0.1–12 | 2.6 | HDR 亮度倍率 |
-| 多普勒频移 + 集束 | 开/关 | 开 | 关闭可对比经典图像 |
-| 引力红移 | 开/关 | 开 | 关闭可对比经典图像 |
-| 黑体真彩色温 | 开/关 | 开 | 关闭后为白热单色 |
-| 测地线精度 | 0.15–2.0 | 0.6 | 步长与最大步数联合调节 |
-| 内部分辨率 | 35–150% | 90% | 抗锯齿与性能权衡 |
-| 曝光 / 辉光 | −2…+3 / 0–2.5 | +0.5 / 1.0 | 色调映射 |
-| 星空亮度 | 0–4 | 1.0 | |
-| 背景 | 星空 / 网格 / 纯黑 | 星空 | 网格模式最直观地展示引力透镜 |
+| Orbital radius r₀ | 3.2–60 M | 12 M | Camera distance from the black hole |
+| Field of view FOV | 12–95° | 60° | |
+| Disk inner radius r_in | 2.2–10 M | **6 M (ISCO)** | The inner edge is the innermost stable circular orbit |
+| Disk outer radius r_out | 8–60 M | 30 M | |
+| Peak temperature T_in | 10⁵–3×10⁷ K | 4×10⁶ K | Logarithmic scale; determines disk color |
+| Disk brightness | 0.1–12 | 2.6 | HDR brightness multiplier |
+| Doppler shift + beaming | On/off | On | Disable to compare with the classical image |
+| Gravitational redshift | On/off | On | Disable to compare with the classical image |
+| Blackbody true color | On/off | On | White-hot monochrome when disabled |
+| Geodesic accuracy | 0.15–2.0 | 0.6 | Joint step-size and maximum-step adjustment |
+| Internal resolution | 35–150% | 90% | Antialiasing/performance tradeoff |
+| Exposure / bloom | −2…+3 / 0–2.5 | +0.5 / 1.0 | Tone mapping |
+| Starfield brightness | 0–4 | 1.0 | |
+| Background | Stars / grid / black | Stars | The grid makes gravitational lensing most apparent |
 
-**物理效果建议**：关闭「多普勒」后，盘面亮度左右对称（只剩引力红移）；
-再关闭「引力红移」后即为无相对论效应的经典吸积盘——逐项开启即可“看到”每一项
-相对论效应的贡献。
+**Exploring the physics**: disabling Doppler makes disk brightness left-right symmetric (only gravitational redshift remains). Disabling gravitational redshift as well gives a classical disk without relativistic effects. Enable them one at a time to see each contribution.
 
 ---
 
-## 物理自检（已运行，全部通过）
+## Physics Self-Tests (Executed, All Passed)
 
-`node` 或浏览器 `?selftest` 运行同一组测试，结果如下（Node v24 实测）：
+`node` and browser `?selftest` run the same tests. Results measured with Node v24:
 
 ```
 PASS  光子球 r=3M 稳定轨道            r = 3.000000000 M
@@ -146,13 +135,12 @@ PASS  吸积盘温度峰值 r_p=1.3611 r_in   数值峰值与解析值一致
 PASS  黑体色温色度                     3000K 偏红 / 30000K 偏蓝
 ```
 
-## 性能
+## Performance
 
-- 每像素 RK4 测地线积分（自适应步长 + 早期终止），默认精度下典型场景
-  60 FPS（独立 GPU），集成显卡建议把「测地线精度」降到 0.3 或内部分辨率降到 60%。
-- 光子环与高阶盘像由积分本身自然产生，提高精度可获得更多重环状像。
+- Per-pixel RK4 geodesic integration (adaptive steps and early exit) gives typical scenes at 60 FPS with default accuracy on a discrete GPU. For integrated graphics, geodesic accuracy of 0.3 or internal resolution of 60% is recommended.
+- Photon rings and higher-order disk images arise naturally from integration; increasing accuracy reveals additional rings.
 
-## 项目结构
+## Project Structure
 
 ```
 blackhole/
@@ -166,12 +154,12 @@ blackhole/
 └── README.md
 ```
 
-## 参考文献
+## References
 
 - Schwarzschild, K. 1916, *Sitzungsber. Preuss. Akad. Wiss.*
-- Luminet, J.-P. 1979, *A&A* 75, 228 —— 史上第一张黑洞照片的数值模拟
-- Page, D. N. & Thorne, K. S. 1974, *ApJ* 191, 499 —— 相对论薄盘
-- Novikov, I. D. & Thorne, K. S. 1973 —— 薄盘温度剖面
-- Riazuelo, A. 2018, *Int. J. Mod. Phys. D* 27, 1842005 —— Schwarzschild 黑洞渲染
-- Keeton & Petters 2005 —— 弱场偏折角高阶展开
-- EHT Collaboration 2019/2022 —— 阴影尺寸 √27M 的观测检验
+- Luminet, J.-P. 1979, *A&A* 75, 228 — the first numerical simulation of a black hole image
+- Page, D. N. & Thorne, K. S. 1974, *ApJ* 191, 499 — relativistic thin disks
+- Novikov, I. D. & Thorne, K. S. 1973 — thin-disk temperature profile
+- Riazuelo, A. 2018, *Int. J. Mod. Phys. D* 27, 1842005 — Schwarzschild black hole rendering
+- Keeton & Petters 2005 — higher-order weak-field deflection
+- EHT Collaboration 2019/2022 — observational tests of the √27M shadow size
