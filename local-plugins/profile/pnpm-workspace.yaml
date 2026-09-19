@@ -1,0 +1,42 @@
+packages:
+  - .
+
+nodeLinker: hoisted
+autoInstallPeers: false
+
+allowBuilds:
+  node-pty: true
+  cloudflared: true
+  cpu-features: true
+  ssh2: true
+
+minimumReleaseAgeExclude:
+  - '@nanmicoder/dsh-agent-teams@0.1.16-rc.3'
+  - dsh-better-sidebar@0.19.0
+  - dshmarket@1.47.0
+  - '@changfenhuang/dsh-genui@0.11.1-preview.2'
+  - '@linxin666/dsh-client-ui-community-plugins@0.3.23'
+  - '@linxin666/dsh-client-ui-git-graph@0.3.23'
+  - '@linxin666/dsh-client-ui-market@0.3.23'
+  - '@linxin666/dsh-client-ui-model-capabilities@0.3.23'
+  - '@linxin666/dsh-client-ui-plugin-manager@0.3.23'
+  - '@linxin666/dsh-client-ui-preset-center@0.3.23'
+  - '@linxin666/dsh-client-ui-skill-explorer@0.3.23'
+  - '@linxin666/dsh-client-ui-skin-center@0.3.23'
+  - '@linxin666/dsh-client-ui-task-board@0.3.23'
+  - '@linxin666/dsh-client-ui-web-ui-settings@0.3.23'
+  - '@linxin666/dsh-doctor@0.3.23'
+  - '@linxin666/dsh-i18n@0.3.23'
+  - '@linxin666/dsh-liangshen@0.3.23'
+  - '@linxin666/dsh-pet@0.3.23'
+  - '@linxin666/dsh-remote-web-ui@0.3.23'
+  - '@linxin666/dsh-session-archive@0.3.23'
+  - '@linxin666/dsh-ssh@0.3.23'
+  - '@linxin666/dsh-tool-describe-image@0.3.23'
+  - '@linxin666/dsh-usage@0.3.23'
+  - '@linxin666/dsh-web-all@0.3.23'
+  - dsh-cost-meter@1.7.28
+
+patchedDependencies:
+  '@nanmicoder/dsh-agent-teams@0.1.18': ../../../../local-plugins/patches/@nanmicoder__dsh-agent-teams@0.1.18.patch
+  dsh-outline@0.1.6: ../../../../local-plugins/patches/dsh-outline@0.1.6.patch

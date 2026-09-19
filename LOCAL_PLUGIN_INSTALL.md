@@ -2,6 +2,22 @@
 
 本实例使用官方发布 `dsh-v0.1.6-alpha.1`，保留 `lans` 分支的本地启动脚本和插件。运行配置位于 `.storages/dsh-home/profiles/web`；个人目录下的 DSH 和旧源码目录不受影响。继续使用 [start.bat](start.bat) 或 [start.ps1](start.ps1)，默认地址为 `127.0.0.1:3080`。
 
+## 从克隆还原插件
+
+插件依赖、bundle 列表、启停覆盖和锁文件都是运行配置，原先只存在于被 `.gitignore` 忽略的 `.storages/dsh-home/profiles/web`，所以重新克隆得不到任何第三方插件。现在这份配置以 [local-plugins/profile](local-plugins/profile) 的种子随 Git 分发，两个本地 tar 包源在 `local-plugins/vendor`。
+
+克隆后运行：
+
+```powershell
+.\bootstrap-profile.ps1
+```
+
+脚本把种子五份文件复制到 `.storages/dsh-home/profiles/web`，再执行 `corepack pnpm install --frozen-lockfile`。种子中的依赖路径全部相对于该目标位置（向仓库根回溯四级），因此只能铺到 `start.ps1` 固定的 DSH home；其他位置会在安装前被拒绝。目标已有 profile 时脚本报错退出，需要先停止 DSH 再加 `-Force`。
+
+本地 tar 包源的 SHA-256：`dsh-skill-mcp-panel-2.0.4.tgz` 为 `899032938e14052fe235de1067f94c1def075d6718cea629b558b98b0f630116`，`dsh-ui-hub-d1ecaffe.tgz` 为 `cfc069933d157d0f498314c66d55a9006994846dd230acda91c031472197e3db`。
+
+种子不含凭据、`settings.yaml`、会话、皮肤和运行数据；这些仍留在本机 `.storages` 中，克隆后需要另行配置。
+
 ## 官方操作能力
 
 Profile 显式挂载 `@deepseek-ai/dsh-browser-use`、`@deepseek-ai/dsh-experimental-browser-use-playwright-mcp`、`@deepseek-ai/dsh-computer-use` 和 `@deepseek-ai/dsh-experimental-computer-use-cua-driver-native`，均来自同一份官方源码。

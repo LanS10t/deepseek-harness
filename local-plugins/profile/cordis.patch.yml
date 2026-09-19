@@ -1,0 +1,36 @@
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+# The installed patch uses agent/created for member initialization.
+- id: agent-teams
+  disabled: false
+# The standalone better-sidebar owns /sidebar/api; do not mount it twice.
+- id: web-ui-better-sidebar
+  disabled: true
+- id: web-ui-pet
+  disabled: true
+# The installed patch subscribes to the Chat target's legacy projection.
+- id: outline
+  disabled: false
+# Native app approval is unavailable outside Codex; keep desktop access disabled.
+- id: sky-computer-use
+  disabled: true
+  config:
+    mode: disabled
+    packagePath: 'C:\Users\LansNi\AppData\Local\OpenAI\Codex\runtimes\cua_node\6f12e0ef1c6e5061\bin\node_modules\@oai\sky'
+    expectedVersion: '0.6.32'
+    allowedApps: []
+    allowAllApps: false
+- insert:
+    - id: browser-use
+      name: '@deepseek-ai/dsh-browser-use'
+    - id: browser-use-playwright-mcp
+      name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
+      config:
+        mode: launch
+        headless: true
+        executablePath: 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
+    - id: computer-use
+      name: '@deepseek-ai/dsh-computer-use'
+    - id: computer-use-cua-driver-native
+      name: '@deepseek-ai/dsh-experimental-computer-use-cua-driver-native'

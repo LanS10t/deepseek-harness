@@ -67,6 +67,8 @@ corepack pnpm install --frozen-lockfile
 corepack pnpm run build
 ```
 
+插件装配不随源码一起出现：新克隆只有官方 DSH，没有本实例的第三方插件。运行 `.\bootstrap-profile.ps1` 把 [local-plugins/profile](local-plugins/profile) 铺回 `.storages/dsh-home/profiles/web` 并安装插件依赖；需要先停止 DSH，已有 profile 时加 `-Force`。详见[当前插件安装记录](LOCAL_PLUGIN_INSTALL.md)。
+
 修改源码后重新构建，再启动。上游依赖或构建要求以[开发指南](docs/development.zh.md)为准。
 
 DSH 属于实验性开发预览，可以执行命令并读写文件。仅监听本机不等于安全沙箱，运行不可信任务前请阅读[安全说明](SAFETY.zh.md)。
